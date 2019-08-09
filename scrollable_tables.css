@@ -2,12 +2,24 @@ body {
   font: sans-serif;
 }
 div {
-  height: 20vh;
+  height: 200px;
 }
 table {
   border-collapse:collapse;
+  overflow-y:hide;
 }
 td, th {
   border: 1px solid black;
   padding: 0.5em;
+}
+thead, tbody {
+  position: relative;
+  display: block;
+  overflow-y: scroll;
+}
+thead {
+  height:10%;
+}
+tbody {
+  height: 20%;
 }
