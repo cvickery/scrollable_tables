@@ -1,9 +1,9 @@
 body {
-  font: sans-serif;
+  font-family: sans-serif;
   width:600px;
 }
 div {
-  height: 200px;
+  height: 40vh;
 }
 table {
   border-collapse:collapse;
@@ -14,13 +14,9 @@ td, th {
   padding: 0.5em;
 }
 thead, tbody {
-  position: relative;
   display: block;
-  overflow-y: scroll;
-}
-thead {
-  height:10%;
 }
 tbody {
-  height: 20%;
+  position: absolute;
+  overflow-y: auto;
 }
