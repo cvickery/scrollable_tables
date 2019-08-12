@@ -1,22 +1,23 @@
 body {
   font-family: sans-serif;
-  width:600px;
+  width:400px;
 }
 div {
   height: 40vh;
 }
+
 table {
   border-collapse:collapse;
-  overflow-y:hide;
 }
 td, th {
   border: 1px solid black;
   padding: 0.5em;
 }
-thead, tbody {
-  display: block;
+
+table.scroll tbody {
+  overflow-y: scroll;
 }
-tbody {
-  position: absolute;
+
+table.auto tbody {
   overflow-y: auto;
 }
