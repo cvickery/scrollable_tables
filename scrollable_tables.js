@@ -1,8 +1,15 @@
 /*  Table elements with the class "scrollable" will have the thead column widths set to match the
-/*  widths of the columns of the tbody.
- *  The table must have one thead section containing a single row, and one tbody section.
+ *  widths of the columns of the tbody.
+ *
+ *  TODO: whether the thead or the tbody is wider
+ *  TODO: different border widths for thead and tbody
+ *  BUG:  left-justified thead cells when multiple thead rows
+ *
+ *  The table must have one thead section. The first tbody section will be scrollable.
+ *
  *  The height of the table must be equal to the height of its containing element, such as a div
  *  with no margin, border, or padding.
+ *
  *  Tables to be scrollable must have the "scrollable" class, and their tbodys must have the
  *  overflow-y property set to either "scroll" or "auto" depending on whether the scrollbars are
  *  always to be visible, or visible only when the table needs to be scrolled.
@@ -28,7 +35,7 @@ function adjust_tables() // The event, etc. parameters are not used.
       scrollable_tables.push(scrollable_elements[i]);
     }
   }
-  // console.log(`There are ${scrollable_tables.length} scrollable tables`);
+
   for (let i = 0; i < scrollable_tables.length; i++)
   {
     // A table must have one thead and one tbody to be scrollable.
@@ -74,21 +81,44 @@ function adjust_tables() // The event, etc. parameters are not used.
       // itself does not give an accurate measure.
       const table_height = table.parentNode.offsetHeight;
       table.style.overflowY = 'hide';
-      const first_head_row = thead.children[0].children;
       const head_height = thead.offsetHeight;
       tbody.style.height = (table_height - head_height) + 'px';
       thead.style.display = 'block';
       tbody.style.display = 'block';
       tbody.style.position = 'absolute';
-      // Set the width of each cell in the first row of thead to match the width of each cell in the
-      // first row of tbody.
+      console.log(`${i}: ${table.offsetWidth} ${thead.offsetWidth} ${tbody.offsetWidth}`);
+
+      // Find the thead row with the max number of columns
+      let longest_thead_row_num = 0;
+      let longest_thead_num_rows = 0;
+      let longest_thead_row_width = 0;
+      for (let row = 0; row < thead.children.length; row++)
+      {
+        let this_row = thead.children[row];
+        if (this_row.children.length > longest_thead_num_rows)
+        {
+          longest_thead_row_num = row;
+          longest_thead_num_rows = this_row.children.length;
+          longest_thead_row_width = 0;
+          for (let col = 0 ; col < longest_thead_num_rows; col++)
+          {
+            longest_thead_row_width += this_row.children[col].offsetWidth;
+          }
+        }
+      }
+      console.log(`thead: ${longest_thead_row_num} ${longest_thead_num_rows} ${longest_thead_row_width}`);
+      // Set the width of each cell in the longest row of thead to match the width of each cell in
+      // the first row of tbody.
+      // const first_head_row = thead.children[0].children;
+      const longest_head_row = thead.children[longest_thead_row_num].children;
       let first_body_row = tbody.children[0].children;
       for (let col = 0; col < first_body_row.length; col++)
       {
-        // Because clientWidth includes horizontal padding, remove same from the header cells.
-        first_head_row[col].style.paddingLeft = 0;
-        first_head_row[col].style.paddingRight = 0;
-        first_head_row[col].style.width = first_body_row[col].clientWidth + 'px';
+        // Because clientWidth includes horizontal padding, remove same from the header cells being
+        // resized.
+        longest_head_row[col].style.paddingLeft = 0;
+        longest_head_row[col].style.paddingRight = 0;
+        longest_head_row[col].style.width = first_body_row[col].clientWidth + 'px';
       }
     }
   }
