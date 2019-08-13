@@ -86,54 +86,56 @@ function adjust_tables() // The event, etc. parameters are not used.
       thead.style.display = 'block';
       tbody.style.display = 'block';
       tbody.style.position = 'absolute';
-      console.log(`${i}: ${table.offsetWidth} ${thead.offsetWidth} ${tbody.offsetWidth}`);
+      console.log(`\nTable ${i}: ${table.offsetWidth} ${thead.offsetWidth} ${tbody.offsetWidth}`);
 
       // Find the thead row with the max number of columns
-      let longest_thead_row_num = 0;
-      let longest_thead_num_rows = 0;
-      let longest_thead_row_width = 0;
+      let max_thead_cols_row_index = 0;
+      let max_thead_cols_num_cols = 0;
       for (let row = 0; row < thead.children.length; row++)
       {
         let this_row = thead.children[row];
-        if (this_row.children.length > longest_thead_num_rows)
+        if (this_row.children.length > max_thead_cols_num_cols)
         {
-          longest_thead_row_num = row;
-          longest_thead_num_rows = this_row.children.length;
-          longest_thead_row_width = 0;
-          for (let col = 0 ; col < longest_thead_num_rows; col++)
-          {
-            longest_thead_row_width += this_row.children[col].offsetWidth;
-          }
+          max_thead_cols_row_index = row;
+          max_thead_cols_num_cols = this_row.children.length;
         }
       }
-      console.log(`thead: ${longest_thead_row_num} ${longest_thead_num_rows} ${longest_thead_row_width}`);
 
-      // calculate width of tbody, since it seems not to be a property of the tbody element.
-      let tbody_width = 0;
-      for (let col = 0; col < tbody.children[0].children.length; col++)
+      if (tbody.offsetWidth < thead.offsetWidth)
       {
-        console.log(`body col: ${col}: width: ${tbody.children[0].children[col].offsetWidth}`);
-        tbody_width += tbody.children[0].children[col].offsetWidth;
-      }
-      console.log(`tbody_width: ${tbody_width}`);
-      if (tbody_width < longest_thead_row_width)
-      {
-        console.log('Need to make tbody wider');
+        console.log('Make tbody wider');
       }
       else
       {
-        // Set the width of each cell in the longest row of thead to match the width of each cell in
+        console.log('Make thead wider');
+        // Set the width of each cell in the each row of thead to match the width of each cell in
         // the first row of tbody.
-        // const first_head_row = thead.children[0].children;
-        const longest_head_row = thead.children[longest_thead_row_num].children;
-        let first_body_row = tbody.children[0].children;
-        for (let col = 0; col < first_body_row.length; col++)
+        const body_row = tbody.children[0].children;
+        for (let head_index = 0; head_index < thead.children.length; head_index++)
         {
-          // Because clientWidth includes horizontal padding, remove same from the header cells
-          // being resized.
-          longest_head_row[col].style.paddingLeft = 0;
-          longest_head_row[col].style.paddingRight = 0;
-          longest_head_row[col].style.width = first_body_row[col].clientWidth + 'px';
+          let head_row = thead.children[head_index].children;
+          let body_col = 0;
+          for (let head_col = 0; head_col < head_row.length; head_col++)
+          {
+            let colspan = head_row[head_col].getAttribute('colspan');
+            if (colspan == null)
+            {
+              colspan = 1;
+            }
+            let col_width = 0;
+            for (let col = 0; col < colspan; col++)
+            {
+              col_width += body_row[body_col++].clientWidth;
+            }
+            console.log(`debug: set ${head_col} width to ${col_width}'' colspan ${colspan}`);
+            // Because clientWidth includes horizontal padding and borders, remove the padding.
+            // NOTE: if border width of thead cells differs from border width of tbody cells, there
+            // will be a misalignment. Also, if the thead cells are not centered, the missing padding
+            // will make the heading rows misaligned.
+            head_row[head_col].style.paddingLeft = 0;
+            head_row[head_col].style.paddingRight = 0;
+            head_row[head_col].style.width = col_width + 'px';
+          }
         }
       }
     }

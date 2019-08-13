@@ -10,14 +10,8 @@ table {
   border-collapse:collapse;
 }
 
-td {
+th, td {
   border: 1px solid black;
-  padding: 0.5em;
-}
-
-th {
-  border: 2px solid black;
-  text-align: left;
   padding: 0.5em;
 }
 
