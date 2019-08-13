@@ -107,18 +107,34 @@ function adjust_tables() // The event, etc. parameters are not used.
         }
       }
       console.log(`thead: ${longest_thead_row_num} ${longest_thead_num_rows} ${longest_thead_row_width}`);
-      // Set the width of each cell in the longest row of thead to match the width of each cell in
-      // the first row of tbody.
-      // const first_head_row = thead.children[0].children;
-      const longest_head_row = thead.children[longest_thead_row_num].children;
-      let first_body_row = tbody.children[0].children;
-      for (let col = 0; col < first_body_row.length; col++)
+
+      // calculate width of tbody, since it seems not to be a property of the tbody element.
+      let tbody_width = 0;
+      for (let col = 0; col < tbody.children[0].children.length; col++)
       {
-        // Because clientWidth includes horizontal padding, remove same from the header cells being
-        // resized.
-        longest_head_row[col].style.paddingLeft = 0;
-        longest_head_row[col].style.paddingRight = 0;
-        longest_head_row[col].style.width = first_body_row[col].clientWidth + 'px';
+        console.log(`body col: ${col}: width: ${tbody.children[0].children[col].offsetWidth}`);
+        tbody_width += tbody.children[0].children[col].offsetWidth;
+      }
+      console.log(`tbody_width: ${tbody_width}`);
+      if (tbody_width < longest_thead_row_width)
+      {
+        console.log('Need to make tbody wider');
+      }
+      else
+      {
+        // Set the width of each cell in the longest row of thead to match the width of each cell in
+        // the first row of tbody.
+        // const first_head_row = thead.children[0].children;
+        const longest_head_row = thead.children[longest_thead_row_num].children;
+        let first_body_row = tbody.children[0].children;
+        for (let col = 0; col < first_body_row.length; col++)
+        {
+          // Because clientWidth includes horizontal padding, remove same from the header cells
+          // being resized.
+          longest_head_row[col].style.paddingLeft = 0;
+          longest_head_row[col].style.paddingRight = 0;
+          longest_head_row[col].style.width = first_body_row[col].clientWidth + 'px';
+        }
       }
     }
   }
