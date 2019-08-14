@@ -1,9 +1,7 @@
 /*  Table elements with the class "scrollable" will have the thead column widths set to match the
  *  widths of the columns of the tbody.
  *
- *  TODO: different border widths for thead and tbody
- *  BUG:  When widening header with a very wide row with less than max cols, it screws up until you
- *        redraw (resize the viewport).
+ *  TODO: Adjust for different cell border widths between the thead and tbody
  *
  *  The table must have one thead section. The first tbody section will be scrollable.
  *
@@ -23,7 +21,7 @@ window.addEventListener('resize', adjust_tables);
 //  -----------------------------------------------------------------------------------------------
 /*  Find all scrollable tables and make their bodies scrollable, as it were.
  */
-function adjust_tables() // The event, etc. parameters are not used.
+function adjust_tables(event)
 {
   //  Find all tables with the scrollable class and containing exactly one thead and one tbody.
   const scrollable_elements = document.getElementsByClassName('scrollable');
@@ -69,8 +67,8 @@ function adjust_tables() // The event, etc. parameters are not used.
         }
       }
     }
-    //  If the table is scrollable, adjust the style properties and the width of the header row
-    //  cells.
+    //  If the table is scrollable, adjust the style properties and the width of the thead or tbody,
+    //  depending on which one is narrower.
     if (thead !== 'Undefined' &&
         thead !== 'Multiple' &&
         tbody !== 'Undefined' &&
@@ -130,4 +128,9 @@ function adjust_tables() // The event, etc. parameters are not used.
       }
     }
   }
+  // HACK: For certain header configurations (namely. when the row with the largest number of
+  // columns is not the widest thead row), the initial adjustment is wrong, but running the
+  // functions again (for example by resizing the viewport) fixes it.
+  if (event.type === 'load')
+    adjust_tables({type: 'dummy'});
 }
