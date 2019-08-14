@@ -1,7 +1,7 @@
 # Scrollable Tables
 
 The JavaScript function *adjust_tables()* fixes the layout problem that occurs when using CSS to
-“freeze” the heading rows of a table while scrolling.
+freeze the heading rows of a table while scrolling.
 
 ## The Problem Being Addressed
 
