@@ -1,9 +1,9 @@
 /*  Table elements with the class "scrollable" will have the thead column widths set to match the
  *  widths of the columns of the tbody.
  *
- *  TODO: whether the thead or the tbody is wider
  *  TODO: different border widths for thead and tbody
- *  BUG:  left-justified thead cells when multiple thead rows
+ *  BUG:  When widening header with a very wide row with less than max cols, it screws up until you
+ *        redraw (resize the viewport).
  *
  *  The table must have one thead section. The first tbody section will be scrollable.
  *
@@ -86,7 +86,6 @@ function adjust_tables() // The event, etc. parameters are not used.
       thead.style.display = 'block';
       tbody.style.display = 'block';
       tbody.style.position = 'absolute';
-      console.log(`\nTable ${i}: ${table.offsetWidth} ${thead.offsetWidth} ${tbody.offsetWidth}`);
 
       // Find the thead row with the max number of columns
       let max_thead_cols_row_index = 0;
@@ -100,42 +99,33 @@ function adjust_tables() // The event, etc. parameters are not used.
           max_thead_cols_num_cols = this_row.children.length;
         }
       }
+      const head_row = thead.children[max_thead_cols_row_index].children;
+      const body_row = tbody.children[0].children;
 
-      if (tbody.offsetWidth < thead.offsetWidth)
+      if (thead.offsetWidth < tbody.offsetWidth)
       {
-        console.log('Make tbody wider');
+        // Set the width of each cell in the row of thead with max cols to match the width of the
+        // corresponding cols in the first row of tbody.
+        for (let head_col = 0; head_col < head_row.length; head_col++)
+        {
+          let cell_style = getComputedStyle(head_row[head_col]);
+          let l_padding = cell_style.getPropertyValue('padding-left').match(/\d+/)[0] - 0;
+          let r_padding = cell_style.getPropertyValue('padding-right').match(/\d+/)[0] - 0;
+          let h_padding = l_padding + r_padding;
+          head_row[head_col].style.minWidth = (body_row[head_col].clientWidth - h_padding) + 'px';
+        }
       }
       else
       {
-        console.log('Make thead wider');
-        // Set the width of each cell in the each row of thead to match the width of each cell in
-        // the first row of tbody.
-        const body_row = tbody.children[0].children;
-        for (let head_index = 0; head_index < thead.children.length; head_index++)
+        // Set the width of each cell in the first body row to match the width of the corresponding
+        // cells in the header row with max number of columns.
+        for (let body_col = 0; body_col < body_row.length; body_col++)
         {
-          let head_row = thead.children[head_index].children;
-          let body_col = 0;
-          for (let head_col = 0; head_col < head_row.length; head_col++)
-          {
-            let colspan = head_row[head_col].getAttribute('colspan');
-            if (colspan == null)
-            {
-              colspan = 1;
-            }
-            let col_width = 0;
-            for (let col = 0; col < colspan; col++)
-            {
-              col_width += body_row[body_col++].clientWidth;
-            }
-            console.log(`debug: set ${head_col} width to ${col_width}'' colspan ${colspan}`);
-            // Because clientWidth includes horizontal padding and borders, remove the padding.
-            // NOTE: if border width of thead cells differs from border width of tbody cells, there
-            // will be a misalignment. Also, if the thead cells are not centered, the missing padding
-            // will make the heading rows misaligned.
-            head_row[head_col].style.paddingLeft = 0;
-            head_row[head_col].style.paddingRight = 0;
-            head_row[head_col].style.width = col_width + 'px';
-          }
+          let cell_style = getComputedStyle(body_row[body_col]);
+          let l_padding = cell_style.getPropertyValue('padding-left').match(/\d+/)[0] - 0;
+          let r_padding = cell_style.getPropertyValue('padding-right').match(/\d+/)[0] - 0;
+          let h_padding = l_padding + r_padding;
+          body_row[body_col].style.minWidth = (head_row[body_col].clientWidth - h_padding) + 'px';
         }
       }
     }
