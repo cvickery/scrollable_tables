@@ -1,6 +1,6 @@
 # Scrollable Tables
 
-When you scroll a web page with a table on it, the column headings scroll out of view. Even though HTML provides _thead_ and _tbody_ elements for dividing a table into the heading and body sections CSS does not provide a mechanism for “freezing” the heading cells while scrolling the body cells the way spreadsheets do. It can be done, but the column headings will not line up with the body columns. A second issue is to make the table responsive to changes in the vertical space allotted to the table, for example when the user opens or closes a _details_ element or resizes the viewport.
+When you scroll a web page with a table on it, the column headings scroll out of view. Even though HTML provides _thead_ and _tbody_ elements for dividing a table into the heading and body sections, CSS does not provide a mechanism for “freezing” the heading cells while scrolling the body cells the way spreadsheets do. It can be done, but the column headings will not line up with the body columns. A second issue is to make the table responsive to changes in the vertical space allotted to the table, for example when the user opens or closes a _details_ element or resizes the viewport.
 
 ScrollableTable is a JavaScript class to handle the column-width and vertical space issues for HTML tables with scrollable bodies.
 
