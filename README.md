@@ -10,15 +10,15 @@ ScrollableTable is a JavaScript class to handle the column-width and vertical sp
 The previous version waited for the web page to load, found all tables on the page with class _scrollable_, and made the adjustments to them to make their bodies scroll “properly.”
 But it did not handle accessible tables, which use the _headers_ and _id_ attributes to associate body cells with their (row and) column headings; did not handle headings with multiple rows correctly, and includes bits of “superstitious” code that obscured parts of the implementation.
 
-Version 2 retains some of the basic characteristics of Version 1 (each scrollable table has to be wrapped in a _div_ with class _table-height_; the table element must have the _scrollable_ class; and the user has to provide code to set up event handlers for events that can change the amount of vertical space available to the table, such as window _resize_ and details _toggle_ events.
+Version 2 retains some of the basic characteristics of Version 1 (each scrollable table has to be wrapped in a _div_ with class _table-height_, and the user has to provide code to set up event handlers for events that can change the amount of vertical space available to the table, such as window _resize_ and details _toggle_ events.
 
-What’s new is the way in which event handlers are set up (cleaner and easier), the ability to work with multi-row headers, including those that use the _headers_ -- _id_ mechanism.
+What’s new is the way in which event handlers are set up (cleaner and easier), the ability to work with multi-row headers, including those that use the _headers_ &#x2014; _id_ mechanism.
 
 Under the hood, but visible to developers, is that the implementation uses JavaScript’s _class_ mechanism. Each scrollable table is made into an instance of the _ScrollableTable_ class.
 
 ## The Solution
 
-The _ScrollableTable_ constructor makes the _thead_ and _tbody_ elements use the _block_ display property, which breaks the layout relationship between columns in the header and body. The `set_width()` method adjusts the column widths in the header an body to match each other, and adjusts the height of the containing div either to fill the remaining space in the viewport or to the value specified as an optional parameter to the constructor.
+The _ScrollableTable_ constructor makes the _thead_ and _tbody_ elements use the _block_ display property, which breaks the layout relationship between columns in the header and body. The `set_width()` method adjusts the column widths in the header and body to match each other, and adjusts the height of the containing div either to fill the remaining space in the viewport or to the value specified as an optional parameter to the constructor.
 
 There is hack: there is no known way (to me) to find out when the browser has finished laying out long tables, so the initial column-width adjustment may be based on incomplete information. After a configuable delay (default is 2,000 milliseconds) the constructor re-calculates the column widths.
 
@@ -31,11 +31,11 @@ The code is pure DOM scripting that does not use or depend on any JavaScript lib
 - Each scrollable table must include both a _thead_ and _tbody_ element. Multiple _tbody_ elements are not supported: only the first one will scroll.
 
 ## Usage
+Put *scrollable_tables.js* in a known location, and load it from the page’s HTML:
 
-- Put *scrollable_tables.js* in a known location, and load it from the page’s HTML:
-
-  `  <script src="./scrollable_tables.js" type="module"></script>`
-
+```html
+<script src="./scrollable_tables.js" type="module"></script>`
+```
 Note the `type="module"` attribute. The Javascript for the page must also be loaded using that attribute, and that code must import the ScrollableTable class. That code identifies the tables to manage and sets up the event handlers. For example:
 
 ```javascript
@@ -113,8 +113,7 @@ In addition to making the table adhere to accessibility guidelines, using the _h
 If the table does not use _headers_ and _id_ attributes, the header row with the largest number of columns, which must equal the number of columns in the first body row, will be used.
 
 ## Known Limitations
-
-- The code assumes that the table uses the border-collapse model, and that just one border, the wider of the left and right borders of a cell, should be subtracted from the width of each column.
+- The code assumes that the table uses the border-collapse model, and that the wider of the left and right borders of a cell is shared between adjacent columns.
 - The left and right border widths have to be equal in the head and body.
 - The code examines only the first row of the table body and does not support the _colspan_ attribute in that row. There have to be an equal number of header columns and body columns.
 - There is no provision for separately scrolling multiple _tbody_ elements within a table.
