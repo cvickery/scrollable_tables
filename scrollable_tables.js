@@ -1,136 +1,221 @@
-/*  Table elements with the class "scrollable" will have the thead column widths set to match the
- *  widths of the columns of the tbody.
- *
- *  TODO: Adjust for different cell border widths between the thead and tbody
- *
- *  The table must have one thead section. The first tbody section will be scrollable.
- *
- *  The height of the table must be equal to the height of its containing element, such as a div
- *  with no margin, border, or padding.
- *
- *  Tables to be scrollable must have the "scrollable" class, and their tbodys must have the
- *  overflow-y property set to either "scroll" or "auto" depending on whether the scrollbars are
- *  always to be visible, or visible only when the table needs to be scrolled.
+/*  scrollable_tables.js
+ *  Support for making table bodies scrollable with headers remaining stationary and header/body
+ *  column widths remaining matched.
  */
 
-// Wait for the document to load or resize, and adjust all scrollable tables on the page.
-window.addEventListener('load', adjust_tables);
-window.addEventListener('resize', adjust_tables);
-
-//  adjust_tables()
-//  -----------------------------------------------------------------------------------------------
-/*  Find all scrollable tables and make their bodies scrollable, as it were.
+//  content_width()
+//  ---------------------------------------------------------------------------------------------
+/*  Returns the content width of a table cell. Assuming border-collapse model, this means the
+ *  computed width minus the sum of its left and right padding and the width of the wider of its
+ *  left and right border.
  */
-function adjust_tables(event)
+const content_width = (cell) =>
 {
-  //  Find all tables with the scrollable class and containing exactly one thead and one tbody.
-  const scrollable_elements = document.getElementsByClassName('scrollable');
-  let scrollable_tables = [];
-  for (let i = 0; i < scrollable_elements.length; i++)
+  let cell_style = getComputedStyle(cell);
+  let pl = Number.parseFloat(cell_style.getPropertyValue('padding-left'), 10);
+  let pr = Number.parseFloat(cell_style.getPropertyValue('padding-right'), 10);
+  let bl = Number.parseFloat(cell_style.getPropertyValue('border-left-width'), 10);
+  let br = Number.parseFloat(cell_style.getPropertyValue('border-right-width'), 10);
+  let adj = pl + pr + Math.max(bl, br);
+  return cell.getBoundingClientRect().width - adj;
+};
+
+
+
+// class ScrollableTable
+// ================================================================================================
+/* The first tbody element of a ScrollableTable will be scrollable, within the limits of the
+ * desired_height, which can be changed via the adjust_height method.
+ */
+export default class ScrollableTable
+{
+  //  constructor()
+  //  ---------------------------------------------------------------------------------------------
+  /*  Makes a table body scrollable while column headers stay in position.
+   *  The height of the table can be given explicitly or can be determined from the space remaining
+   *  in the viewport.
+   */
+  constructor(args)
   {
-    if (scrollable_elements[i].tagName === 'TABLE')
+    // Context
+    // ............................................................................................
+    this.table = args.table;
+    this.desired_height = args.height;
+    this.width_delay = args.delay ? args.delay : 2000;
+    this.padding_bottom = args.padding ? args.padding : 10;
+
+    this.thead = this.table.getElementsByTagName('thead')[0];
+    let head_height = this.thead.offsetHeight;
+    this.tbody = this.table.getElementsByTagName('tbody')[0];
+    let body_height = this.tbody.offsetHeight;
+    this.intrinsic_height = head_height + body_height;
+    this.parent_node = this.table.parentNode; // Force this one's height to desired_height or less.
+
+    // Attributes that make a table body scrollable
+    // ............................................................................................
+    this.thead.style.display = 'block';
+    this.tbody.style.display = 'block';
+    this.tbody.style.position = 'absolute';
+    this.adjust_height();
+    this.adjust_widths();
+    setTimeout(function ()
     {
-      scrollable_tables.push(scrollable_elements[i]);
-    }
+      // Heuristic cleanup.
+      // Wait for table layout to complete, and then readjust the column widths again.
+      // If the table is too long to complete layout in 1 sec, the code that creates this object
+      // should do its own width readjustment after a longer delay.
+      this.adjust_widths();
+    }.bind(this), this.width_delay);
   }
 
-  for (let i = 0; i < scrollable_tables.length; i++)
+
+  //  adjust_height()
+  //  ---------------------------------------------------------------------------------------------
+  /*  Change the height of a ScrollableTable's parent div: initially, or because of an event that
+   *  makes it necessary to do so.
+   */
+  adjust_height()
   {
-    // A table must have one thead and one tbody to be scrollable.
-    let table = scrollable_tables[i];
-    let thead = 'Undefined';
-    let tbody = 'Undefined';
-    const children = table.children;
-    for (let c = 0; c < children.length; c++)
+    const table_top = this.parent_node.offsetTop;
+    const viewport_height = window.innerHeight;
+    let div_height = viewport_height - (table_top + this.padding_bottom);
+    if (this.desired_height)
     {
-      let tag_name = children[c].tagName;
-      if (tag_name === 'THEAD')
+      // The height is a known value
+      div_height = Math.min(div_height, this.desired_height);
+    }
+    else
+    {
+      // The height depends on the space available.
+      div_height = Math.min(div_height, this.intrinsic_height);
+    }
+
+    //  Adjust the height of the parent node, and make the body fit.
+    this.parent_node.style.height = (div_height + this.padding_bottom) + 'px';
+    this.tbody.style.height = (div_height - this.thead.offsetHeight) + 'px';
+  }
+
+
+  // get_height_callback()
+  // ----------------------------------------------------------------------------------------------
+  /* Provide a reference to this object’s adjust_height method, bound to ‘this’. I don’t understand
+   * why the object returned by the constructor doesn’t take care of this, but I think it’s because
+   * ES6 classes are just syntactic sugar for nested functions, so the closure has to be handled
+   * explicitly.
+   *
+   * Used for setting up event listeners when window is resized or details elements toggle state.
+   */
+  get_height_callback()
+  {
+    return this.adjust_height.bind(this);
+  }
+
+
+  // adjust_widths()
+  // ----------------------------------------------------------------------------------------------
+  /* Adjust cell widths so that tbody cells line up with thead cells. If the table uses the
+   * headers attribute to reference row and column positions, this is easy, provided the column
+   * ids end with '-col'. Use an alternative heuristic if that requirement does not obtain. */
+  adjust_widths()
+  {
+    // Test if all cells in the first row of the body have proper headers attributes, including
+    // at least one that ends with '-col'.
+    // “Feature Request”: handle multiple -col headers (cases where multiple body cells match a
+    // header cell with a rowspan > 1).
+    let first_body_row_cells = this.tbody.children[0].children;
+    let has_headers = true;
+    let head_cells = [];
+    let body_cells = [];
+    for (let col = 0; col < first_body_row_cells.length; col++)
+    {
+      let body_cell = first_body_row_cells[col];
+      if (body_cell.hasAttribute('headers'))
       {
-        if (thead === 'Undefined')
+        let headers_str = body_cell.getAttribute('headers');
+        let col_id = null;
+        let headers = headers_str.split(' ');
+        for (let i = 0; i < headers.length; i++)
         {
-          thead = children[c];
+          if (headers[i].match(/-col$/))
+          {
+            col_id = headers[i];
+            break;
+          }
         }
-        else
+        if (col_id === null)
         {
-          thead = 'Multple';
+          has_headers = false;
+          break;
         }
+        let head_cell = document.getElementById(col_id);
+        //  Save layout information for pairs of head/body cells in a column
+        body_cells[col] = {cell: first_body_row_cells[col], width: content_width(body_cell)};
+        head_cells[col] = {cell: head_cell, width: content_width(head_cell)};
       }
-      if (tag_name === 'TBODY')
+      else
       {
-        if (tbody === 'Undefined')
+        has_headers = false;
+        break;
+      }
+    }
+    if (has_headers)
+    {
+      // Make the narrower of the header cell or body cell match the width of the wider of the two.
+      for (let col = 0; col < head_cells.length; col++)
+      {
+        if (head_cells[col].cell.offsetWidth < body_cells[col].cell.offsetWidth)
         {
-          tbody = children[c];
+          head_cells[col].cell.style.minWidth = body_cells[col].width + 'px';
         }
         else
         {
-          tbody = 'Multple';
+          body_cells[col].cell.style.minWidth = head_cells[col].width + 'px';
         }
       }
     }
-    //  If the table is scrollable, adjust the style properties and the width of the thead or tbody,
-    //  depending on which one is narrower.
-    if (thead !== 'Undefined' &&
-        thead !== 'Multiple' &&
-        tbody !== 'Undefined' &&
-        tbody !== 'Multiple')
+    else
     {
-      // Set the height of the tbody. Do this by getting the height of the table minus the height of
-      // the thead. The height of the table is the height of its containing element; the table
-      // itself does not give an accurate measure.
-      const table_height = table.parentNode.offsetHeight;
-      table.style.overflowY = 'hide';
-      const head_height = thead.offsetHeight;
-      tbody.style.height = (table_height - head_height) + 'px';
-      thead.style.display = 'block';
-      tbody.style.display = 'block';
-      tbody.style.position = 'absolute';
-
-      // Find the thead row with the max number of columns
+      // Alternate heuristic: find the row in thead with the largest number of cells, assume that
+      // is the number of columns. If that matches the number of cells in the first row of the body,
+      // do the width adjustment. If this fails, the table will be scrollable, but the columns
+      // will not line up.
       let max_thead_cols_row_index = 0;
       let max_thead_cols_num_cols = 0;
-      for (let row = 0; row < thead.children.length; row++)
+      for (let row = 0; row < this.thead.children.length; row++)
       {
-        let this_row = thead.children[row];
+        let this_row = this.thead.children[row];
         if (this_row.children.length > max_thead_cols_num_cols)
         {
           max_thead_cols_row_index = row;
           max_thead_cols_num_cols = this_row.children.length;
         }
       }
-      const head_row = thead.children[max_thead_cols_row_index].children;
-      const body_row = tbody.children[0].children;
-
-      if (thead.offsetWidth < tbody.offsetWidth)
+      let head_cells = this.thead.children[max_thead_cols_row_index].children;
+      let body_cells = this.tbody.children[0].children;
+      if (head_cells.length === body_cells.length)
       {
         // Set the width of each cell in the row of thead with max cols to match the width of the
         // corresponding cols in the first row of tbody.
-        for (let head_col = 0; head_col < head_row.length; head_col++)
+        for (let col = 0; col < head_cells.length; col++)
         {
-          let cell_style = getComputedStyle(head_row[head_col]);
-          let l_padding = cell_style.getPropertyValue('padding-left').match(/\d+/)[0] - 0;
-          let r_padding = cell_style.getPropertyValue('padding-right').match(/\d+/)[0] - 0;
-          let h_padding = l_padding + r_padding;
-          head_row[head_col].style.minWidth = (body_row[head_col].clientWidth - h_padding) + 'px';
+          let head_cell = head_cells[col];
+          let body_cell = body_cells[col];
+          let head_cell_width = content_width(head_cell);
+          let body_cell_width = content_width(body_cell);
+          if (head_cell_width < body_cell_width)
+          {
+            head_cell.style.minWidth = body_cell_width + 'px';
+          }
+          else
+          {
+            body_cell.style.minWidth = head_cell_width + 'px';
+          }
         }
       }
       else
       {
-        // Set the width of each cell in the first body row to match the width of the corresponding
-        // cells in the header row with max number of columns.
-        for (let body_col = 0; body_col < body_row.length; body_col++)
-        {
-          let cell_style = getComputedStyle(body_row[body_col]);
-          let l_padding = cell_style.getPropertyValue('padding-left').match(/\d+/)[0] - 0;
-          let r_padding = cell_style.getPropertyValue('padding-right').match(/\d+/)[0] - 0;
-          let h_padding = l_padding + r_padding;
-          body_row[body_col].style.minWidth = (head_row[body_col].clientWidth - h_padding) + 'px';
-        }
+        console.error(`Unable to adjust widths: ${head_cells.length} !== ${body_cells.length}`);
       }
     }
   }
-  // HACK: For certain header configurations (namely. when the row with the largest number of
-  // columns is not the widest thead row), the initial adjustment is wrong, but running the
-  // functions again (for example by resizing the viewport) fixes it.
-  if (event.type === 'load')
-    adjust_tables({type: 'dummy'});
 }
