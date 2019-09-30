@@ -26,8 +26,8 @@ The code is pure DOM scripting that does not use or depend on any JavaScript lib
 
 ## HTML and CSS Preconditions
 
-- Each table to be adjusted must be wrapped in another HTML element, normally a _div_, with no top/bottom borders or padding. When *ScrollableTable* adjusts the height of a table, it does so by adjusting the height of this _div_.
-- The containing div must have zero margin, border, and padding. It must not be positioned. This set of constraints may possbily be violated, but the results are not guaranteed.
+- Each table to be adjusted must be wrapped in another HTML element, normally a _div_. When *ScrollableTable* adjusts the height of a table, it does so by adjusting the height of this _div_.
+- The containing div must have zero margin, border, and padding, and it must not be positioned. These constraints may possbily be violated, but the results are not guaranteed.
 - Each scrollable table must include both a _thead_ and _tbody_ element. Multiple _tbody_ elements are not supported: only the first one will scroll.
 
 ## Usage
@@ -42,7 +42,7 @@ Note the `type="module"` attribute. The Javascript for the page must also be loa
 import ScrollableTable from './scrollable_tables.js';
 window.addEventListener('load', function ()
 {
-  // Make the first table (if there is one) scrollable.
+  // Make the first table with the scrollable class (if there is one) scrollable.
   const tables = document.getElementsByClassName('scrollable');
   if (tables.length > 0)
   {
@@ -68,14 +68,14 @@ window.addEventListener('load', function ()
 ### Constructor Arguments
 Arguments are passed as an object. All fields are optional, although omitting the _table_ field will lead to nonsense. The other fields are:
 
-height
+_height_
 : The desired height of the table, in pixels. If omitted, the height will be the number of pixels from the top of the table to the bottom of the viewport.
 
-delay
+_delay_
 : Number of milliseconds to wait for the table layout to complete before re-calculating column widths. Default is 2,000.
 
-padding
-: The number of pixels to add to the height of the containing _div_. This simulates bottom padding to allow room for a horizontal scrollbar and/or to make it clear that the bottom of the bottom row is visible. Default is 10 (8 for a scrollbar, 1 for a bottom border, and 1 for clarity).
+_padding_
+: The number of pixels to add to the height of the containing _div_. This simulates bottom padding to allow room for a horizontal scrollbar and/or to make it clear to users that the bottom of the bottom row is visible. Default is 10 (8 for a scrollbar, 1 for a bottom border, and 1 for clarity).
 
 > **On Callbacks**  
 > Event handlers are invoked in a different context from the _onload_ event handler,
