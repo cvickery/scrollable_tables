@@ -18,7 +18,7 @@ Under the hood, but visible to developers, is that the implementation uses JavaS
 
 ## The Solution
 
-The _ScrollableTable_ constructor makes the _thead_ and _tbody_ elements use the _block_ display property, which breaks the layout relationship between columns in the header and body. The `set_width()` method adjusts the column widths in the header and body to match each other, and adjusts the height of the containing div either to fill the remaining space in the viewport or to the value specified as an optional parameter to the constructor.
+The _ScrollableTable_ constructor makes the _thead_ and _tbody_ elements use the _block_ display property, which breaks the layout relationship between columns in the header and body. The `adjust_table()` method adjusts the column widths in the header and body to match each other, and adjusts the height of the containing div either to fill the remaining space in the viewport or to the value specified as an optional parameter to the constructor.
 
 There is hack: there is no known way (to me) to find out when the browser has finished laying out long tables, so the initial column-width adjustment may be based on incomplete information. After a configuable delay (default is 2,000 milliseconds) the constructor re-calculates the column widths.
 
@@ -47,18 +47,18 @@ window.addEventListener('load', function ()
   if (tables.length > 0)
   {
     const the_table = new ScrollableTable({table: tables[0]});
-    const get_height = the_table.get_height_callback();
+    const adjust_table = the_table.get_adjustment_callback();
 
     // Re-process the table’s height when the viewport is resized.
-    window.addEventListener('resize', get_height);
-    
+    window.addEventListener('resize', adjust_table);
+
     // Re-process the table’s height when details elements open/close.
     const details = document.getElementsByTagName('details');
     if (details)
     {
       for (let i = 0; i < details.length; i++)
       {
-        details[i].addEventListener('toggle', get_height);
+        details[i].addEventListener('toggle', adjust_table);
       }
     }
   }
@@ -77,9 +77,9 @@ _delay_
 _padding_
 : The number of pixels to add to the height of the containing _div_. This simulates bottom padding to allow room for a horizontal scrollbar and/or to make it clear to users that the bottom of the bottom row is visible. Default is 10 (8 for a scrollbar, 1 for a bottom border, and 1 for clarity).
 
-> **On Callbacks**  
+> **On Callbacks**
 > Event handlers are invoked in a different context from the _onload_ event handler,
-> so the `get_table_height()` method provides a copy of the instance’s `get_height()`
+> so the `get_adjustment_callback()` method provides a copy of the instance’s `adjust_table()`
 > method that is bound to the instance’s _this_ value.
 
 ### Using _headers_ and _id_ for column widths
