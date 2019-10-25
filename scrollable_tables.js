@@ -42,10 +42,14 @@ export default class ScrollableTable
   {
     // Context
     // ............................................................................................
+    if (DEBUG_HEIGHT || DEBUG_WIDTHS)
+    {
+      console.log(args);
+    }
     this.table = args.table;
     this.desired_height = args.height;
     this.initial_delay = args.delay ? args.delay : 2000;
-    this.padding_bottom = args.padding ? args.padding : 12;
+    this.padding_bottom = args.padding ? args.padding : 2;
     this.use_heading_widths = args.use_heading;
     this.thead = this.table.getElementsByTagName('thead')[0];
     let head_height = this.thead.offsetHeight;
@@ -78,15 +82,15 @@ export default class ScrollableTable
   // ----------------------------------------------------------------------------------------------
   /* Adjust the table’s height and width.
    */
-  adjust_table(use_heading_widths)
+  adjust_table()
   {
-    this.adjust_widths(use_heading_widths);
+    this.adjust_widths(this.use_heading_widths);
     this.adjust_height();
   }
 
   // get_adjustment_callback()
   // ----------------------------------------------------------------------------------------------
-  /* Provide a reference to this object’s adjust_height method, bound to ‘this’. I don’t understand
+  /* Provide a reference to this object’s adjust_table method, bound to ‘this’. I don’t understand
    * why the object returned by the constructor doesn’t take care of this, but I think it’s because
    * ES6 classes are just syntactic sugar for nested functions, so the closure has to be handled
    * explicitly.
@@ -106,18 +110,20 @@ export default class ScrollableTable
    */
   adjust_height()
   {
-    if (DEBUG_HEIGHT)
-    {
-      console.log(`viewport height: ${window.innerHeight}
-table top: ${this.parent_node.offsetTop}
-intrinsic height: ${this.intrinsic_height}
-desired height: ${this.desired_height}
-padding bottom: ${this.padding_bottom}`);
-    }
 
     const viewport_height = window.innerHeight;
     const table_top = this.parent_node.offsetTop;
     const available_height = viewport_height - table_top;
+
+    if (DEBUG_HEIGHT)
+    {
+      console.log(`viewport height: ${window.innerHeight}
+table top: ${this.parent_node.offsetTop}
+available height: ${available_height}
+intrinsic height: ${this.intrinsic_height}
+desired height: ${this.desired_height}
+padding bottom: ${this.padding_bottom}`);
+    }
 
     let head_height = this.thead.offsetHeight;
     let body_height = Math.min(available_height - head_height, this.intrinsic_height - head_height);
@@ -131,20 +137,39 @@ padding bottom: ${this.padding_bottom}`);
     {
       console.log(`available height: ${available_height},
 head height: ${head_height}
-body height: ${body_height}`);
+body height: ${body_height}
+padding: ${this.padding_bottom}`);
     }
     this.tbody.style.height = (body_height + this.padding_bottom) + 'px';
-    this.parent_node.style.height = (head_height + body_height + this.padding_bottom) + 'px';
+    let parent_height = head_height + body_height;
+    this.parent_node.style.height = (parent_height + this.padding_bottom) + 'px';
+    if (parent_height > available_height)
+    {
+      this.parent_node.style.overflowY = 'scroll';
+    }
+    else
+    {
+      this.parent_node.style.overflowY = 'hidden';
+    }
     if ((this.thead.offsetHeight + this.tbody.offsetHeight) < available_height)
     {
-      // Eliminate empty scrollbar area
+      // Eliminate empty scrollbar area ...
       this.tbody.style.overflowY = 'hidden';
+    }
+    else
+    {
+      // ... but be sure it’s there if needed.
+      this.tbody.style.overflowY = 'scroll';
     }
     if (DEBUG_HEIGHT)
     {
-      console.log(`available height: ${available_height},
+      console.log(`viewport height: ${viewport_height}
+table top: ${table_top}
+available height: ${available_height}
+intrinsic height: ${this.intrinsic_height}
 head height: ${this.thead.offsetHeight}
 body height: ${this.tbody.offsetHeight}
+overflowY: ${this.tbody.style.overflowY}
 -------------------------`);
     }
   }
@@ -157,10 +182,7 @@ body height: ${this.tbody.offsetHeight}
    * ids end with '-col'. Uses an alternative heuristic if that requirement does not obtain. */
   adjust_widths(use_heading_widths)
   {
-    if (DEBUG_WIDTHS)
-    {
-      console.log(`use heading widths: ${use_heading_widths}`);
-    }
+    const viewport_width = window.innerWidth;
     // Test if all cells in the first row of the body have proper headers attributes, including
     // at least one that ends with '-col'.
     // “Feature Request”: handle multiple -col headers (cases where multiple body cells match a
@@ -200,6 +222,16 @@ body height: ${this.tbody.offsetHeight}
         has_headers = false;
         break;
       }
+    }
+    this.parent_node.overflowX = 'hidden';
+    if (DEBUG_WIDTHS)
+    {
+      console.log(`use heading widths: ${use_heading_widths}
+has headers: ${has_headers}
+viewport width: ${viewport_width}
+header_width: ${this.thead.offsetWidth}
+body_width: ${this.tbody.offsetWidth}
+`);
     }
     if (has_headers)
     {
@@ -261,6 +293,13 @@ body height: ${this.tbody.offsetHeight}
       {
         console.error(`Unable to adjust widths: ${head_cells.length} !== ${body_cells.length}`);
       }
+      console.log(`use heading widths: ${use_heading_widths}
+has headers: ${has_headers}
+viewport width: ${viewport_width}
+header_width: ${this.thead.offsetWidth}
+body_width: ${this.tbody.offsetWidth}
+---------------------------------------
+`);
     }
   }
 }
