@@ -14,7 +14,7 @@ See [https://developer.mozilla.org/en-US/docs/Web/CSS/position](https://develope
 
 I’m keeping the code and the remainder of the original README here as a historical artifact.
 
-``<div style="color: #888; background-color:#eee; padding:0.5em;">
+<div style="color: #888; background-color:#eee; padding:0.5em;">
 
 # Scrollable Tables: Historical Artifact
 
