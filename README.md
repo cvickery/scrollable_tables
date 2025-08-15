@@ -14,8 +14,6 @@ See [https://developer.mozilla.org/en-US/docs/Web/CSS/position](https://develope
 
 I’m keeping the code and the remainder of the original README here as a historical artifact.
 
-<div style="color: gray;">
-
 # Scrollable Tables: Historical Artifact
 
 When you scroll a web page with a table on it, the column headings scroll out of view. Even though
@@ -187,5 +185,3 @@ What’s new is the way in which event handlers are set up (cleaner and easier) 
 work with multi-row headers, including those that use the _headers_ &#x2014; _id_ mechanism.
 
 Under the hood, but visible to developers, is that the implementation uses JavaScript’s _class_ mechanism. Each scrollable table is made into an instance of the _ScrollableTable_ class.
-
-</div>
