@@ -1,4 +1,22 @@
-# Scrollable Tables
+# Obsolete ... Do Not Use This Project!
+At the time I developed this project, I could not find a way to “freeze" column headers in HTML tables.
+But in fact, all modern browsers support the CSS `sticky` value for the `position` property of `thead` elements. For example, this piece of CSS will cause `thead` elements to remain in position at the top of the viewport when scrolling a table that is too tall to fit in the viewport:
+
+```
+thead {
+  position: sticky;
+  top: 0;
+  }
+```
+No JavaScript needed at all! The browser keeps the column headers aligned with the body columns. Note that the table doesn’t have to be the first thing on the page, but once the table scrolls to the top, the header will stick there while the rest of the table continues to scroll.
+
+See [https://developer.mozilla.org/en-US/docs/Web/CSS/position](https://developer.mozilla.org/en-US/docs/Web/CSS/position) for more details.
+
+I’m keeping the code and the remainder of the original README here as a historical artifact.
+
+``<div style="color: #888; background-color:#eee; padding:0.5em;">
+
+# Scrollable Tables: Historical Artifact
 
 When you scroll a web page with a table on it, the column headings scroll out of view. Even though
 HTML provides _thead_ and _tbody_ elements for dividing a table into the heading and body sections,
@@ -7,7 +25,8 @@ way spreadsheets do. It can be done, but the column headings will not line up wi
 A second issue is to make the table responsive to changes in the vertical space allotted to the
 table, for example when the user opens or closes a _details_ element or resizes the viewport.
 
-ScrollableTable is a JavaScript class to handle the column-width and vertical space issues for HTML tables with scrollable bodies.
+ScrollableTable is a JavaScript class to handle the column-width and vertical space issues for HTML
+tables with scrollable bodies.
 
 ## The Solution
 
@@ -21,7 +40,8 @@ There is hack: there is no known way (to me) to find out when the browser has fi
 long tables, so the initial column-width adjustment may be based on incomplete information. After a
 configuable delay (default is 2,000 milliseconds) the constructor re-calculates the column widths.
 
-The code is pure DOM scripting that does not use or depend on any JavaScript library, nor will it interfere with the use of any JavaScript library. (Tested on pages that use JQuery.)
+The code is pure DOM scripting that does not use or depend on any JavaScript library, nor will it
+interfere with the use of any JavaScript library. (Tested on pages that use JQuery.)
 
 ## HTML and CSS Preconditions
 
@@ -38,7 +58,9 @@ Put *scrollable_tables.js* in a known location, and load it from the page’s HT
 ```html
 <script src="./scrollable_tables.js" type="module"></script>`
 ```
-Note the `type="module"` attribute. The Javascript for the page must also be loaded using that attribute, and that code must import the ScrollableTable class. That code identifies the tables to manage and sets up the event handlers. For example:
+Note the `type="module"` attribute. The Javascript for the page must also be loaded using that
+attribute, and that code must import the ScrollableTable class. That code identifies the tables to
+manage and sets up the event handlers. For example:
 
 ```javascript
 import ScrollableTable from './scrollable_tables.js';
@@ -126,7 +148,8 @@ column widths determined by the first cell in the first row and the other cells 
 ```
 
 ### Fallback for column widths
-If the table does not use _headers_ and _id_ attributes, the header row with the largest number of columns, which must equal the number of columns in the first body row, will be used.
+If the table does not use _headers_ and _id_ attributes, the header row with the largest number of
+columns, which must equal the number of columns in the first body row, will be used.
 
 ## Known Limitations
 - The code assumes that the table uses the border-collapse model, and that the wider of the left and
@@ -164,3 +187,5 @@ What’s new is the way in which event handlers are set up (cleaner and easier) 
 work with multi-row headers, including those that use the _headers_ &#x2014; _id_ mechanism.
 
 Under the hood, but visible to developers, is that the implementation uses JavaScript’s _class_ mechanism. Each scrollable table is made into an instance of the _ScrollableTable_ class.
+
+</div>
